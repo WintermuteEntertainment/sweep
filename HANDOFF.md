@@ -10,7 +10,9 @@ Last updated: 2026-11-12
   Ask the owner before starting it.
 - Repo created 2026-11-12 with `git init`. Branch `master`.
   First commit 3494bfa on 2026-11-12. `.claude/launch.json` is left out on purpose (unused).
-- No remote. Nothing pushed. The repo is private for now, public later.
+- Remote: https://github.com/WintermuteEntertainment/sweep, PRIVATE,
+  created and pushed 2026-11-12. Public later, only when the owner says.
+  Run `sweep repo` on this repo before making it public.
 - One focused safety review done 2026-11-12: two real defects found and
   fixed (see NOTES.md). No review of detector or term-scoring correctness.
 - Web interface BUILT 2026-11-12 (design in PLAN.md, "Web interface").
