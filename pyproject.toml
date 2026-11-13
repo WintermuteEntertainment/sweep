@@ -7,6 +7,7 @@ name = "sweep"
 version = "0.1.0"
 description = "Finds personal data in a git repo and traces of that repo elsewhere. Reports and offers; never deletes on its own."
 readme = "README.md"
+license = { text = "GPL-3.0-only" }
 requires-python = ">=3.11"
 dependencies = []
 
