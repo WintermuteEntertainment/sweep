@@ -37,8 +37,13 @@ html, body { margin: 0; background: var(--bg); color: var(--text);
 .brand { font-weight: 700; letter-spacing: .12em; }
 .repo-bar { display: flex; gap: 8px; flex: 1 1 480px; }
 .repo-bar input { flex: 1; }
-.job { display: flex; gap: 10px; align-items: center; padding: 6px 10px;
-  border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); }
+/* Progress gets its own full-width row under the header, so a long folder
+   name wraps instead of covering anything. */
+.job { position: sticky; top: var(--header-height, 58px); z-index: 4; display: flex;
+  gap: 12px; align-items: center; padding: 8px 20px; background: var(--panel-2);
+  border-bottom: 1px solid var(--line); }
+.job span { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
+.job button { flex: none; }
 
 main { max-width: 1100px; margin: 0 auto; padding: 16px 20px 80px; }
 section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -143,7 +148,8 @@ tr.tracked td { background: var(--danger-bg); }
 .viewer-text .ln { display: inline-block; min-width: 4.5em; color: var(--muted);
   user-select: none; }
 .viewer-text .hl { background: var(--danger-bg); display: block; }
-.viewer-text mark { background: var(--medium); color: #111; border-radius: 2px; }
+.viewer-text mark, .snippet mark { background: var(--medium); color: #111;
+  border-radius: 2px; padding: 0 1px; }
 .links { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: middle; }
 .links button { padding: 1px 8px; font-size: 13px; }
 .log li { padding: 3px 0; border-bottom: 1px solid var(--line); }

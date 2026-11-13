@@ -66,6 +66,8 @@ function put(id, ...kids) { $(id).replaceChildren(...kids.flat().filter((k) => k
 // --- jobs: ask for progress only while one is running ----------------------
 
 function waitForJob(onDone) {
+  // Keep the progress row just under the header, whatever height it wraps to.
+  document.documentElement.style.setProperty("--header-height", `${document.querySelector(".top").offsetHeight}px`);
   $("job").classList.remove("hidden");
   const tick = async () => {
     let state;
@@ -179,7 +181,7 @@ function renderScan() {
           : f.line ? `${f.path}:${f.line}  (${f.area}${f.status ? ", " + f.status : ""})` : `${f.path}  (${f.area})` }),
         f.area === "history" ? fileLinks("blob", f.blob, f.line, [f.value], false)
           : f.file_id ? fileLinks("scan", f.file_id, f.line, [f.value]) : null,
-        f.snippet ? el("div", { class: "snippet", text: f.snippet }) : null)),
+        f.snippet ? el("div", { class: "snippet" }, ...markWords(f.snippet, [f.value])) : null)),
         items.length > 40 ? el("div", { class: "muted", text: `... and ${items.length - 40} more` }) : null,
         items.some((f) => f.area === "history" && !f.in_head)
           ? el("div", { class: "steps", text: "History-only findings stay in the repo until its history is rewritten (for example with git-filter-repo). Sweep does not rewrite history. Anyone who already pulled the repo keeps them." })
@@ -355,7 +357,7 @@ function hitRow(h) {
         el("span", { class: "muted small", text: `  ${size(h.size)}` }),
         fileLinks("search", h.id, h.line, Object.keys(h.terms))),
       ...details.map((d) => el("div", { class: "detail", text: d })),
-      h.snippet ? el("div", { class: "snippet", text: `line ${h.line}: ${h.snippet}` }) : null,
+      h.snippet ? el("div", { class: "snippet" }, `line ${h.line}: `, ...markWords(h.snippet, Object.keys(h.terms))) : null,
       h.steps.length ? el("div", { class: "steps", text: h.steps.join("\n") }) : null));
 }
 
@@ -450,7 +452,8 @@ function fileLinks(source, id, line, words, onDisk = true) {
 }
 
 function markWords(text, words) {
-  const wanted = words.filter((w) => w && w.length >= 3);
+  // Longest first, so a word inside a longer matched word is not split off.
+  const wanted = words.filter((w) => w && w.length >= 3).sort((a, b) => b.length - a.length);
   if (!wanted.length) return [text];
   const escaped = wanted.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   const pattern = new RegExp(`(${escaped.join("|")})`, "gi");

@@ -149,6 +149,7 @@ class _Tracer:
         # nothing. It is used to estimate a search before running it.
         self.count_only = count_only
         self.would_open = 0
+        self.last_progress = 0.0
         self.include_deps = include_dependency_folders
         self.progress = progress
         terms = term_list.terms if term_list else []
@@ -225,9 +226,11 @@ class _Tracer:
                 self.skip("could not open folder", folder)
                 continue
             self.folders += 1
-            if self.folders % 200 == 0:
-                self.progress(f"{self.files_seen:,} files seen, "
-                              f"{len(self.hits):,} hits")
+            now = time.monotonic()
+            if now - self.last_progress >= 0.5:
+                self.last_progress = now
+                self.progress(f"in {root}: {self.files_seen:,} files seen, "
+                              f"{len(self.hits):,} hits. Now: {folder}")
             dot_git = next((e for e in entries if e.name == ".git"), None)
             if (dot_git is not None and self.fp.anchors
                     and shares_history(dot_git.path, self.fp.anchors)):

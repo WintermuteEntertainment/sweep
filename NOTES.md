@@ -2,6 +2,16 @@
 
 Decisions and reasoning, newest first.
 
+## 2026-11-12: progress shows the folder; matches highlighted
+
+- The progress row was inside the header and the search counter replaced
+  the "Searching <folder>" line. It now has its own full-width row under
+  the header, and reads "in <scope>: N files seen, N hits. Now: <folder>".
+  It updates every half second (was every 200 folders, which left it on
+  "0 files seen" for seconds on a fresh run).
+- Snippets in sections 1 and 4 highlight the exact text that matched
+  (the value, or the search words), longest match first.
+
 ## 2026-11-12: easier to read, and links on every result
 
 - Owner found the page too dark and the text hard to read. Background
