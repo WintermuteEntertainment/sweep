@@ -177,6 +177,8 @@ function renderScan() {
         el("span", { class: "mono small", text: f.area === "history"
           ? `${f.path}:${f.line}  (history only, commit ${(f.commits[0] || "").slice(0, 10)})`
           : f.line ? `${f.path}:${f.line}  (${f.area}${f.status ? ", " + f.status : ""})` : `${f.path}  (${f.area})` }),
+        f.area === "history" ? fileLinks("blob", f.blob, f.line, [f.value], false)
+          : f.file_id ? fileLinks("scan", f.file_id, f.line, [f.value]) : null,
         f.snippet ? el("div", { class: "snippet", text: f.snippet }) : null)),
         items.length > 40 ? el("div", { class: "muted", text: `... and ${items.length - 40} more` }) : null,
         items.some((f) => f.area === "history" && !f.in_head)
@@ -189,7 +191,7 @@ function renderScan() {
   put("scan-files", ...files.map((f) => el("tr", { class: f.status === "tracked" ? "tracked" : "" },
     el("td", {}, el("input", { type: "checkbox", checked: picked.scan.has(f.id),
       onchange: (e) => pickScanFile(e.target, f) })),
-    el("td", { class: "path", text: f.relative }),
+    el("td", { class: "path" }, f.relative, fileLinks("scan", f.id, 0, [])),
     el("td", {}, f.status === "tracked" ? el("b", { class: "bad", text: "tracked (DANGER)" }) : f.status),
     el("td", { text: size(f.size) }))));
   renderDeleteBars();
@@ -350,7 +352,8 @@ function hitRow(h) {
       : el("span", { class: "muted", title: "inside another git repo", text: "x" }),
     el("div", {},
       el("div", {}, el("span", { class: `str-${h.strength}`, text: h.strength + " " }), el("span", { class: "name", text: name }),
-        el("span", { class: "muted small", text: `  ${size(h.size)}` })),
+        el("span", { class: "muted small", text: `  ${size(h.size)}` }),
+        fileLinks("search", h.id, h.line, Object.keys(h.terms))),
       ...details.map((d) => el("div", { class: "detail", text: d })),
       h.snippet ? el("div", { class: "snippet", text: `line ${h.line}: ${h.snippet}` }) : null,
       h.steps.length ? el("div", { class: "steps", text: h.steps.join("\n") }) : null));
@@ -431,6 +434,44 @@ function confirmDialog(title, body, okText, onOk) {
   $("dialog-ok").onclick = () => { $("dialog").classList.add("hidden"); onOk(); };
   $("dialog-cancel").onclick = () => $("dialog").classList.add("hidden");
 }
+
+// --- viewing a result ---------------------------------------------------------
+
+// "View" shows the text in the page, read-only. "Show in folder" opens File
+// Explorer with the file selected. Neither opens or runs the file itself.
+function fileLinks(source, id, line, words, onDisk = true) {
+  if (!id) return null;
+  return el("span", { class: "links" },
+    el("button", { type: "button", onclick: () => guarded(() => viewFile(source, id, line, words)) },
+      onDisk ? "View" : "View old version"),
+    onDisk ? el("button", { type: "button", onclick: () => guarded(async () => {
+      await api("reveal", { source, id }); say("Opened in File Explorer.");
+    }) }, "Show in folder") : null);
+}
+
+function markWords(text, words) {
+  const wanted = words.filter((w) => w && w.length >= 3);
+  if (!wanted.length) return [text];
+  const escaped = wanted.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = new RegExp(`(${escaped.join("|")})`, "gi");
+  return text.split(pattern).map((part, i) => i % 2 ? el("mark", { text: part }) : part);
+}
+
+async function viewFile(source, id, line, words) {
+  const data = await api("view", { source, id });
+  const lines = data.text.split("\n");
+  put("viewer-title", data.title);
+  $("viewer-note").textContent = (data.truncated ? "Only the first 512 KB is shown. " : "") +
+    "Read-only. Highlighted: the matched text" + (line ? `, and line ${line}.` : ".");
+  put("viewer-text", lines.map((text, i) => el("span", { class: i + 1 === line ? "hl" : "", id: i + 1 === line ? "viewer-line" : null },
+    el("span", { class: "ln", text: String(i + 1) }), ...markWords(text, words), "\n")));
+  $("viewer").classList.remove("hidden");
+  const target = $("viewer-line");
+  if (target) target.scrollIntoView({ block: "center" });
+  else $("viewer-text").scrollTop = 0;
+}
+$("viewer-close").onclick = () => $("viewer").classList.add("hidden");
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("viewer").classList.add("hidden"); });
 
 // --- history -----------------------------------------------------------------
 

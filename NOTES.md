@@ -2,6 +2,23 @@
 
 Decisions and reasoning, newest first.
 
+## 2026-11-12: easier to read, and links on every result
+
+- Owner found the page too dark and the text hard to read. Background
+  lifted (#15171a to #22262b), grey text brightened (contrast 6.3:1 to
+  8.0:1 on panels), base text 15px to 16px, small text 13px to 14px,
+  locked sections less faded (opacity .45 to .7).
+- Every result now has "View" (the file's text in the page, read-only,
+  matched text highlighted, scrolled to the line) and "Show in folder"
+  (File Explorer opens with the file selected). History-only findings get
+  "View old version", read from git. Nothing is ever opened with its own
+  program or run: a browser cannot safely open local files, and opening
+  with the default program would run scripts and programs.
+- Both take an id the server listed, never a path. View refuses links,
+  junctions, cloud-only files and binary files, and shows at most 512 KB.
+- Show in folder opens Explorer on the machine running Sweep, which in LAN
+  mode is not the machine you are browsing from.
+
 ## 2026-11-12: web interface built
 
 - Python's ThreadingHTTPServer, plain HTML/CSS/JS, no libraries.

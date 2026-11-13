@@ -300,6 +300,16 @@ class WebScenarioTests(unittest.TestCase):
         self.assertTrue(gone["outcomes"][0]["done"])
         self.assertFalse(os.path.exists(os.path.join(self.repo, "untracked_todo.txt")))
 
+        # viewing: by id only, text comes back, history blobs too
+        shown = c.api("view", {"source": "scan", "id": files["NOTES.md"]["id"]})
+        self.assertIn("lantern_rollover", shown["text"])
+        c.api("view", {"source": "scan", "id": "no-such-id"}, expect=400)
+        c.api("view", {"source": "search", "id": "h0"}, expect=400)   # no search yet
+        blob = next(f["blob"] for f in scan["findings"] if f["area"] == "history")
+        self.assertIn(EMAIL, c.api("view", {"source": "blob", "id": blob})["text"])
+        c.api("view", {"source": "blob", "id": "0" * 40}, expect=400)
+        c.api("reveal", {"source": "blob", "id": blob}, expect=400)
+
         # 2: search words; the search is refused until they are reviewed
         c.api("search", {"scopes": [{"path": self.around}]}, expect=400)
         c.api("words/propose"); c.wait()
@@ -324,6 +334,8 @@ class WebScenarioTests(unittest.TestCase):
         self.assertIn("Desktop/budget notes.txt", hits)
         self.assertIn("Temp/run.log", hits)
         self.assertNotIn("Downloads/unrelated.txt", hits)
+        viewed = c.api("view", {"source": "search", "id": hits["Temp/run.log"]["id"]})
+        self.assertIn("lantern_rollover", viewed["text"])
         other = hits["SomeoneElsesRepo/README.md"]
         self.assertFalse(other["deletable"])
         self.assertTrue(other["steps"])

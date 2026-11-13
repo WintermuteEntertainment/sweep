@@ -20,6 +20,7 @@ import json
 import os
 import secrets
 import socket
+import subprocess
 import threading
 import time
 from dataclasses import asdict
@@ -33,7 +34,7 @@ from . import __version__, delete, gitsrc
 from .places import fixed_drives, known_places, norm
 from .report import (default_report_dir, render_text, write_reports,
                      write_trace_reports)
-from .scan import SKIP_DIRS, is_cloud_only, is_link, scan_repo
+from .scan import decode, is_cloud_only, is_link, scan_repo
 from .terms import MIN_TERM_LENGTH, TermList, build_candidates
 from .trace import trace_repo
 from .tracereport import render_trace_text
@@ -42,6 +43,8 @@ STATIC = Path(__file__).with_name("static")
 # Measured on the build machine, 2026-11-12: about 30 ms to open a file the
 # first time. Repeat runs are much faster. Used only for a rough estimate.
 FIRST_OPEN_SECONDS = 0.030
+# The viewer shows at most this much of a file.
+VIEW_LIMIT = 512 * 1024
 
 
 class ApiError(Exception):
@@ -428,6 +431,57 @@ class Api:
                     pool.pop(key, None)
         return {"outcomes": [asdict(o) for o in outcomes]}
 
+    # viewing a result
+
+    def _locate(self, body: dict) -> tuple[str, str]:
+        """(path on disk, git blob id); exactly one is set. Only files the
+        server itself listed can be named, by id, never by path."""
+        source, key = body.get("source"), str(body.get("id") or "")
+        if source == "scan" and key in self.s.scan_files:
+            return self.s.scan_files[key]["path"], ""
+        if source == "search" and key in self.s.hit_files:
+            return self.s.hit_files[key]["path"], ""
+        if source == "blob" and self.s.scan and any(
+                f.blob == key for f in self.s.scan.findings):
+            return "", key
+        raise ApiError("unknown file; refresh the page")
+
+    def view(self, body: dict) -> dict:
+        path, blob = self._locate(body)
+        limit = VIEW_LIMIT
+        if blob:
+            data = next((d for _, d in gitsrc.read_blobs(self.s.repo, [blob])), b"")
+            title = f"Old version from git history (blob {blob[:10]})"
+        else:
+            try:
+                info = os.lstat(path)
+            except OSError as error:
+                raise ApiError(f"cannot open it: {error.strerror}")
+            if is_link(info):
+                raise ApiError("it is a link or junction; not opened")
+            if is_cloud_only(info):
+                raise ApiError("it exists only in the cloud; opening it would download it")
+            with open(path, "rb") as handle:
+                data = handle.read(limit + 1)
+            title = path
+        text = decode(data[:limit])
+        if text is None:
+            raise ApiError("it is a binary file; use Show in folder instead")
+        return {"title": title, "text": text, "truncated": len(data) > limit}
+
+    def reveal(self, body: dict) -> dict:
+        path, blob = self._locate(body)
+        if blob:
+            raise ApiError("an old version from history has no file on disk")
+        if os.name != "nt":
+            raise ApiError("Show in folder works on Windows only for now")
+        if not os.path.lexists(path):
+            raise ApiError("it is no longer there")
+        # Opens File Explorer with the file selected. The file itself is
+        # never opened or run.
+        subprocess.Popen(["explorer", f"/select,{os.path.normpath(path)}"])
+        return {"ok": True}
+
     # history
 
     def save(self, body: dict) -> dict:
@@ -461,7 +515,7 @@ ROUTES = {
     "estimate": "estimate", "estimate-result": "estimate_result",
     "search": "search", "search-result": "search_result",
     "delete": "delete", "save": "save", "history": "history",
-    "text-report": "text_report",
+    "text-report": "text_report", "view": "view", "reveal": "reveal",
 }
 
 LOGIN_PAGE = """<!doctype html><html><head><meta charset="utf-8">
