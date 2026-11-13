@@ -9,7 +9,7 @@ Last updated: 2026-11-12
 - v0.3 (network shares, archives, documents, gitleaks) is NOT started.
   Ask the owner before starting it.
 - Repo created 2026-11-12 with `git init`. Branch `master`.
-  NO COMMITS YET: everything is uncommitted, waiting for the owner's OK.
+  First commit 3494bfa on 2026-11-12. `.claude/launch.json` is left out on purpose (unused).
 - No remote. Nothing pushed. The repo is private for now, public later.
 - One focused safety review done 2026-11-12: two real defects found and
   fixed (see NOTES.md). No review of detector or term-scoring correctness.
