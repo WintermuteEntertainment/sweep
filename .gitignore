@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Reports and term lists hold personal data. They belong outside the repo.
+sweep-reports/
+*.sweep-report.json
+*.sweep-report.txt
+*.sweep-trace.json
+*.sweep-trace.txt
+*.sweep-terms.txt

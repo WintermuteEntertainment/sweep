@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sweep"
+version = "0.1.0"
+description = "Finds personal data in a git repo and traces of that repo elsewhere. Reports and offers; never deletes on its own."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+sweep = "sweep.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

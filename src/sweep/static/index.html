@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="sweep-token" content="__TOKEN__">
+<title>Sweep</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">SWEEP <span id="version" class="muted"></span></div>
+  <div class="repo-bar">
+    <input id="repo-path" type="text" placeholder="Path to a git repo, for example D:\Repos\project" spellcheck="false">
+    <button id="repo-browse" type="button">Browse</button>
+    <button id="repo-set" type="button" class="primary">Use this repo</button>
+  </div>
+  <div id="job" class="job hidden">
+    <span id="job-text"></span>
+    <button id="job-stop" type="button" class="danger-outline">Stop</button>
+  </div>
+</header>
+
+<div id="browser" class="browser hidden">
+  <div class="browser-head">
+    <button id="browser-up" type="button">Up</button>
+    <span id="browser-path" class="mono"></span>
+    <button id="browser-pick" type="button" class="primary">Use this folder</button>
+    <button id="browser-close" type="button">Close</button>
+  </div>
+  <ul id="browser-list"></ul>
+</div>
+
+<div id="message" class="message hidden" role="status"></div>
+
+<main>
+  <p id="repo-info" class="muted">Choose a repo to start. Sweep reads; it changes nothing unless you press a delete button and confirm.</p>
+
+  <section id="s1" class="locked">
+    <h2><span class="num">1</span> Inside the repo</h2>
+    <p class="muted">Personal data in the repo's files, git history, commit messages and remote addresses.</p>
+    <div class="actions"><button id="scan-run" type="button" class="primary">Run</button></div>
+    <div id="scan-summary"></div>
+    <div id="scan-filters" class="filters hidden">
+      Show:
+      <label><input type="checkbox" data-area="working-tree" checked> working tree</label>
+      <label><input type="checkbox" data-area="history" checked> history only</label>
+      <label><input type="checkbox" data-area="file-name" checked> file names</label>
+      <label><input type="checkbox" data-area="commit-message" checked> commit messages</label>
+      <label><input type="checkbox" data-area="remote" checked> remotes</label>
+    </div>
+    <div id="scan-values"></div>
+    <div id="scan-files-box" class="hidden">
+      <h3>Files in this repo that hold findings</h3>
+      <p class="muted">Untracked and ignored files can simply be deleted. Files git tracks get a DANGER warning first: deleting them leaves them in history.</p>
+      <table class="files"><thead><tr><th></th><th>File</th><th>Git</th><th>Size</th></tr></thead><tbody id="scan-files"></tbody></table>
+      <div class="delete-bar" data-source="scan"></div>
+    </div>
+  </section>
+
+  <section id="s2" class="locked">
+    <h2><span class="num">2</span> Search words</h2>
+    <p class="muted">Words and file names likely to belong only to this repo. Sweep looks for them in other folders. Untick ordinary words: they match thousands of unrelated files.</p>
+    <div class="actions"><button id="words-propose" type="button" class="primary">Propose search words</button></div>
+    <div id="words-box" class="hidden">
+      <div class="two-col">
+        <div>
+          <h3>Words</h3>
+          <ul id="words-list" class="checks"></ul>
+          <div class="add-row"><input id="word-add" type="text" placeholder="Add a word (4+ characters)"><button id="word-add-btn" type="button">Add</button></div>
+        </div>
+        <div>
+          <h3>File names</h3>
+          <ul id="names-list" class="checks"></ul>
+          <div class="add-row"><input id="name-add" type="text" placeholder="Add a file name"><button id="name-add-btn" type="button">Add</button></div>
+        </div>
+      </div>
+      <p id="words-notes" class="muted small"></p>
+      <div class="actions"><button id="words-review" type="button" class="primary">I've reviewed this list</button> <span id="words-status" class="muted"></span></div>
+    </div>
+  </section>
+
+  <section id="s3" class="locked">
+    <h2><span class="num">3</span> Where to look</h2>
+    <p class="muted">Nothing is searched unless it is ticked here. Links, junctions and cloud-only files are never opened.</p>
+    <div class="two-col">
+      <div>
+        <h3>Known places</h3>
+        <ul id="places-list" class="checks"></ul>
+      </div>
+      <div>
+        <h3>Whole drives</h3>
+        <ul id="drives-list" class="checks"></ul>
+        <h3>Other folders</h3>
+        <ul id="folders-list" class="checks"></ul>
+        <div class="add-row"><input id="folder-add" type="text" placeholder="Add a folder"><button id="folder-add-btn" type="button">Add</button></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="estimate-run" type="button">Count files first</button>
+      <button id="search-run" type="button" class="primary">Search</button>
+    </div>
+    <div id="estimate-box"></div>
+  </section>
+
+  <section id="s4" class="locked">
+    <h2><span class="num">4</span> Leftovers found</h2>
+    <div id="search-summary"></div>
+    <div id="hits"></div>
+    <div class="delete-bar" data-source="search"></div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="num">H</span> History</h2>
+    <p class="muted">Nothing is saved unless you save it. Saved reports hold the personal data they found, so they are leftovers too.</p>
+    <div class="actions">
+      <button id="save-scan" type="button">Save section 1 report</button>
+      <button id="save-search" type="button">Save section 4 report</button>
+      <button id="history-refresh" type="button">Refresh</button>
+    </div>
+    <table class="files"><thead><tr><th></th><th>Report</th><th>Files</th><th>Size</th></tr></thead><tbody id="history-list"></tbody></table>
+    <div class="actions">
+      <button id="history-select-all" type="button">Select all history</button>
+    </div>
+    <div class="delete-bar" data-source="history"></div>
+  </section>
+
+  <section id="log-box" class="hidden">
+    <h2>What was done</h2>
+    <ul id="log" class="log mono small"></ul>
+  </section>
+</main>
+
+<div id="dialog" class="dialog hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <h3 id="dialog-title"></h3>
+    <div id="dialog-body"></div>
+    <div class="actions">
+      <button id="dialog-cancel" type="button">Cancel</button>
+      <button id="dialog-ok" type="button" class="danger">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
